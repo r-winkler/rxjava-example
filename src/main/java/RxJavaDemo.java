@@ -63,21 +63,33 @@ public class RxJavaDemo {
         connectableObservable.subscribe(System.out::println);
         connectableObservable.connect();
 
-        System.out.println("--------------------------------------------");
-        List<Double> randomValues  = DoubleStream.iterate(0, n  ->  100*Math.random()).limit(1_000_000).boxed().collect(toList());
-        Observable values = Observable.fromIterable(randomValues);
-        Observable clock = Observable.interval(10, TimeUnit.MILLISECONDS);
 
-        values.zipWith(clock, (v, t) -> v).buffer(5, TimeUnit.SECONDS)
-            .map(buffer ->  {
-                List<Double> list = (List<Double>)buffer;
-                return list.stream().mapToDouble(l -> l).summaryStatistics();
-            })
+        System.out.println("--------------------------------------------");
+        List<Double> randomValues  = DoubleStream
+            .iterate(0, n  ->  Math.random() * 100)
+            .limit(1_000_000)
+            .boxed()
+            .collect(toList());
+        Observable<Double> values = Observable.fromIterable(randomValues);
+        Observable<Long> clock = Observable.interval(10, TimeUnit.MILLISECONDS);
+
+        values
+            .zipWith(clock, (v, t) -> v)
+            .buffer(5, TimeUnit.SECONDS)
+            .map(buffer ->  buffer.stream().mapToDouble(l -> l).summaryStatistics())
             .subscribe(System.out::println);
 
 
-        while(true) {
-            Thread.sleep(100);
-        }
+        System.out.println("--------------------------------------------");
+        Observable.<Double>create(emitter -> {
+            while(true) {
+                emitter.onNext(Math.random() * 10);
+                TimeUnit.SECONDS.sleep(1);
+            }
+        })
+            .buffer(3, TimeUnit.SECONDS)
+            .map(buffer -> buffer.stream().mapToDouble(l -> l).average().getAsDouble())
+            .subscribe(d -> System.out.println("avg: " + d));
+
     }
 }
