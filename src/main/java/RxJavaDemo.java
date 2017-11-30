@@ -3,10 +3,14 @@ import io.reactivex.observables.ConnectableObservable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.DoubleStream;
+
+import static java.util.stream.Collectors.toList;
 
 public class RxJavaDemo {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         System.out.println("--------------------------------------------");
         Observable.range(1, 5).subscribe(System.out::println);
 
@@ -58,5 +62,22 @@ public class RxJavaDemo {
         ConnectableObservable connectableObservable = ConnectableObservable.fromArray(arr).publish();
         connectableObservable.subscribe(System.out::println);
         connectableObservable.connect();
+
+        System.out.println("--------------------------------------------");
+        List<Double> randomValues  = DoubleStream.iterate(0, n  ->  100*Math.random()).limit(1_000_000).boxed().collect(toList());
+        Observable values = Observable.fromIterable(randomValues);
+        Observable clock = Observable.interval(10, TimeUnit.MILLISECONDS);
+
+        values.zipWith(clock, (v, t) -> v).buffer(5, TimeUnit.SECONDS)
+            .map(buffer ->  {
+                List<Double> list = (List<Double>)buffer;
+                return list.stream().mapToDouble(l -> l).summaryStatistics();
+            })
+            .subscribe(System.out::println);
+
+
+        while(true) {
+            Thread.sleep(100);
+        }
     }
 }
