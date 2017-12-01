@@ -83,17 +83,20 @@ public class RxJavaDemo {
 
         System.out.println("--------------------------------------------");
         Observable.<Double>create(emitter -> {
-            while(true) {
+            while (true) {
                 emitter.onNext(Math.random() * 10);
                 TimeUnit.SECONDS.sleep(1);
             }
         })
             .buffer(3, TimeUnit.SECONDS)
-            .subscribeOn(Schedulers.computation())
+            // other thread for all operation downwards from here
+            // use subscribeOn for all operation upwards from here
+            .observeOn(Schedulers.computation())
             .map(buffer -> buffer.stream().mapToDouble(l -> l).average().getAsDouble())
-            .subscribe(d -> System.out.println(Thread.currentThread() + "avg: " + d));
-
-        while(true);
+            .subscribe(d -> System.out.println("avg: " + d));
+        
     }
+
+
 
 }
