@@ -1,5 +1,6 @@
 import io.reactivex.Observable;
 import io.reactivex.observables.ConnectableObservable;
+import io.reactivex.schedulers.Schedulers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +33,7 @@ public class RxJavaDemo {
         Observable.fromIterable(words).subscribe(System.out::println);
 
         System.out.println("--------------------------------------------");
-        String [] arr = {"A", "B", "C", "D"};
+        String[] arr = {"A", "B", "C", "D"};
         Observable.fromArray(arr).map(String::toLowerCase).subscribe(System.out::println);
 
         System.out.println("--------------------------------------------");
@@ -65,8 +66,8 @@ public class RxJavaDemo {
 
 
         System.out.println("--------------------------------------------");
-        List<Double> randomValues  = DoubleStream
-            .iterate(0, n  ->  Math.random() * 100)
+        List<Double> randomValues = DoubleStream
+            .iterate(0, n -> Math.random() * 100)
             .limit(1_000_000)
             .boxed()
             .collect(toList());
@@ -76,7 +77,7 @@ public class RxJavaDemo {
         values
             .zipWith(clock, (v, t) -> v)
             .buffer(5, TimeUnit.SECONDS)
-            .map(buffer ->  buffer.stream().mapToDouble(l -> l).summaryStatistics())
+            .map(buffer -> buffer.stream().mapToDouble(l -> l).summaryStatistics())
             .subscribe(System.out::println);
 
 
@@ -88,8 +89,11 @@ public class RxJavaDemo {
             }
         })
             .buffer(3, TimeUnit.SECONDS)
+            .subscribeOn(Schedulers.computation())
             .map(buffer -> buffer.stream().mapToDouble(l -> l).average().getAsDouble())
-            .subscribe(d -> System.out.println("avg: " + d));
+            .subscribe(d -> System.out.println(Thread.currentThread() + "avg: " + d));
 
+        while(true);
     }
+
 }
